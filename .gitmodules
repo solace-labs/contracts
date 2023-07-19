@@ -1,0 +1,3 @@
+[submodule "stackup"]
+	path = stackup
+	url = https://github.com/stackup-wallet/contracts.git
