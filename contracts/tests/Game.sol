@@ -3,8 +3,8 @@ pragma solidity ^0.8.12;
 
 contract Game {
     struct Task {
-        uint state; // 0 - Not Started, 1 - In Progress, 2 - Completed
-        uint points;
+        uint256 state; // 0 - Not Started, 1 - In Progress, 2 - Completed
+        uint256 points;
     }
 
     struct Item {
@@ -14,29 +14,27 @@ contract Game {
     }
 
     struct Player {
-        uint points;
-        mapping(uint => Task) tasks;
-        mapping(uint => Item) items;
+        uint256 points;
+        mapping(uint256 => Task) tasks;
+        mapping(uint256 => Item) items;
     }
 
     mapping(address => Player) public players;
     mapping(address => uint) public points;
 
-    event StartedTask(address player, uint taskID);
     event CompletedTask(address player, uint taskID);
     event EarnedPoints(address player, uint points);
     event BoughtItem(address player, uint itemID);
     event UpgradedItem(address player, uint itemID);
     event TransferredPoints(address from, address to, uint points);
 
-    function startTask(uint _taskID, uint _points) external {
+    function startTask(uint256 _taskID, uint256 _points) external {
         players[msg.sender].tasks[_taskID] = Task(1, _points);
         points[msg.sender] = _points;
-        emit StartedTask(msg.sender, _taskID);
     }
 
-    function nothin(uing _id, uint _tent) external {
-        
+    function nothin(uint256 _id, uint256 _tent) external {
+        points[msg.sender] = _id * _tent;
     }
 
     function completeTask(uint _taskID) public {

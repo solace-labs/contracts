@@ -50,9 +50,6 @@ describe("Game Testing", async function () {
     testCounter = tc;
     boundaryContract = bc;
 
-    console.log(await paymaster.owner());
-    console.log(await admin.getAddress());
-
     const [_, bundlerS] = await ethers.getSigners();
     // @ts-ignore
     bundler = bundlerS;
@@ -156,12 +153,12 @@ describe("Game Testing", async function () {
 
   it("Should test the boundary contract", async function () {
     const functionSelector = ethers.utils
-      .id("setValue(uint256)")
+      .id("checkPoint(uint256)")
       .substring(0, 10);
-    const value = 90;
+    const points = 90;
     const functionCallData = boundaryContract.interface.encodeFunctionData(
-      "setValue",
-      [value]
+      "checkPoint",
+      [points]
     );
     const sessionKey = Wallet.createRandom();
     const sessionTokenData: SessionBase.FunctionCallStruct = {
