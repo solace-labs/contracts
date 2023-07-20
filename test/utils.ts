@@ -151,11 +151,11 @@ export const encodeFunctionCallData = async (
   for (let i = 0; i < params.length; i++) {
     let argTypeStr = "bytes";
     const argType = fc.arguments[i].argType;
-    if (argType === ArgumentType.ADDRESS) {
+    if (argType === 2) {
       argTypeStr = "address";
-    } else if (argType === ArgumentType.STRING) {
+    } else if (argType === 1) {
       argTypeStr = "string";
-    } else if (argType === ArgumentType.UINT) {
+    } else if (argType === 0) {
       argTypeStr = "uint256";
     }
     let packedParam = ethers.utils.solidityPack([argTypeStr], [params[i]]);
@@ -244,3 +244,53 @@ export const setupTest = async () => {
     bc: boundaryContract,
   };
 };
+
+// Create & Sign Session Token
+// User signs this to allow the dapp
+export async function getSessionToken(
+  fc: SessionBase.FunctionCallStruct,
+  userEOA: Signer,
+  solaceAccount: SolaceAccount
+) {
+  const encoded = await encodeFunctionCall(fc, solaceAccount);
+  const digest = ethers.utils.arrayify(encoded);
+  const hashData = ethers.utils.keccak256(digest);
+  return await userEOA.signMessage(ethers.utils.arrayify(hashData));
+}
+
+// Sign user op
+export async function getUserOpSignature(
+  fc: SessionBase.FunctionCallStruct,
+  params: any[],
+  sessionEOA: Signer,
+  sessionToken: string,
+  solaceAccount: SolaceAccount
+) {
+  const encoded = await encodeFunctionCall(fc, solaceAccount);
+  let dataAndParams = ethers.utils.arrayify(encoded);
+  let paramsEncoded = [];
+  // Loop over params and concatenate each element with dataAndParams
+  for (let i = 0; i < params.length; i++) {
+    let argTypeStr = "bytes";
+    const argType = fc.arguments[i].argType;
+    if (argType === 2) {
+      argTypeStr = "address";
+    } else if (argType === 1) {
+      argTypeStr = "string";
+    } else if (argType === 0) {
+      argTypeStr = "uint256";
+    }
+    let packedParam = ethers.utils.solidityPack([argTypeStr], [params[i]]);
+    paramsEncoded.push(packedParam);
+    dataAndParams = ethers.utils.concat([dataAndParams, packedParam]);
+  }
+  const hashDataAndParams = ethers.utils.keccak256(dataAndParams);
+  const sessionSignature = await sessionEOA.signMessage(
+    ethers.utils.arrayify(hashDataAndParams)
+  );
+  const packedData = ethers.utils.solidityPack(["bytes"], [encoded]);
+  return ethers.utils.defaultAbiCoder.encode(
+    ["bytes", "bytes", "bytes", "bytes[]"],
+    [sessionToken, sessionSignature, packedData, paramsEncoded]
+  );
+}

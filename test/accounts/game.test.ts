@@ -11,6 +11,8 @@ import {
   fillAndSign,
   fund,
   getPaymasterData,
+  getSessionToken,
+  getUserOpSignature,
   setupTest,
   simulationResultCatch,
 } from "../utils";
@@ -66,100 +68,27 @@ describe("Game Testing", async function () {
     // await fund(solaceAccount.address);
     await fund(entryPoint.address);
   });
-  it("should start task", async function () {
-    const sessionWallet = ethers.Wallet.createRandom();
-    let functionCall: SessionBase.FunctionCallStruct = {
-      targetContract: gameContract.address,
-      sessionKey: sessionWallet.address,
-      functionSelector: ethers.utils
-        .id("startTask(uint256,uint256)")
-        .substring(0, 10),
-      arguments: [
-        {
-          argType: 0,
-          paramLowerBound: ethers.utils.defaultAbiCoder.encode(
-            ["uint256"],
-            [0]
-          ),
-          paramUpperBound: ethers.utils.defaultAbiCoder.encode(
-            ["uint256"],
-            [100]
-          ),
-        },
-        {
-          argType: 0,
-          paramLowerBound: ethers.utils.defaultAbiCoder.encode(
-            ["uint256"],
-            [0]
-          ),
-          paramUpperBound: ethers.utils.defaultAbiCoder.encode(
-            ["uint256"],
-            [100]
-          ),
-        },
-      ],
-      validUntil: 123,
-      validFrom: 123,
-    };
-    const { packedData, paramsEncoded, hashData, hashDataAndParams } =
-      await encodeFunctionCallData(functionCall, [10, 2]);
-
-    const sessionToken = await userEOA.signMessage(
-      ethers.utils.arrayify(hashData)
-    );
-    const sessionSig = await sessionWallet.signMessage(
-      ethers.utils.arrayify(hashDataAndParams)
-    );
-
-    const signature = ethers.utils.defaultAbiCoder.encode(
-      ["bytes", "bytes", "bytes", "bytes[]"],
-      [sessionToken, sessionSig, packedData, paramsEncoded]
-    );
-
-    const gameFunctionCallData = gameContract.interface.encodeFunctionData(
-      "startTask",
-      [10, 2]
-    );
-    const callData = solaceAccount.interface.encodeFunctionData("execute", [
-      gameContract.address,
-      0,
-      gameFunctionCallData,
-    ]);
-    const userOp = await getPaymasterData(
-      solaceAccount.address,
-      callData,
-      // @ts-ignore
-      paymaster,
-      entryPoint,
+  it("should create session tokens", async function () {
+    const sessionKey = ethers.Wallet.createRandom();
+    const startTaskSession = getSessionToken(
+      {
+        functionSelector: ethers.utils.id("startTask()"),
+        targetContract: boundaryContract.address,
+        sessionKey: sessionKey.address,
+        arguments: [],
+        validFrom: 0,
+        validUntil: 1000,
+      },
       userEOA,
-      admin
+      solaceAccount
     );
-    // const userOp = await fillAndSign(
-    //   {
-    //     sender: solaceAccount.address,
-    //     callData,
-    //   },
-    //   bundler,
-    //   entryPoint
-    // );
-    userOp.verificationGasLimit = 10000000;
-    userOp.signature = signature;
-    const { returnInfo } = await entryPoint.callStatic
-      .simulateValidation(userOp)
-      .catch(simulationResultCatch);
-    console.log({ sigFailed: returnInfo.sigFailed });
-    // expect(returnInfo.sigFailed).to.be.false;
   });
 
   it("Should test the boundary contract", async function () {
-    const functionSelector = ethers.utils
-      .id("checkPoint(uint256)")
-      .substring(0, 10);
+    const functionSelector = ethers.utils.id("startTask()").substring(0, 10);
     const points = 90;
-    const functionCallData = boundaryContract.interface.encodeFunctionData(
-      "checkPoint",
-      [points]
-    );
+    const functionCallData =
+      boundaryContract.interface.encodeFunctionData("startTask");
     const sessionKey = Wallet.createRandom();
     const sessionTokenData: SessionBase.FunctionCallStruct = {
       targetContract: boundaryContract.address,
@@ -182,7 +111,7 @@ describe("Game Testing", async function () {
       ],
     };
     const { hashData, hashDataAndParams, packedData, paramsEncoded } =
-      await encodeFunctionCallData(sessionTokenData, [value], solaceAccount);
+      await encodeFunctionCallData(sessionTokenData, [points], solaceAccount);
     const sessionToken = await userEOA.signMessage(
       ethers.utils.arrayify(hashData)
     );
