@@ -40,6 +40,7 @@ describe("Game Testing", async function () {
   let admin: Signer;
   let bundler: Signer;
   let boundaryContract: Boundary;
+  let sk__startTask: string;
   this.beforeAll(async function () {
     const { sf, pm, gc, ep, ue, ad, tc, bc } = await setupTest();
     solaceFactory = sf;
@@ -70,7 +71,7 @@ describe("Game Testing", async function () {
   });
   it("should create session tokens", async function () {
     const sessionKey = ethers.Wallet.createRandom();
-    const startTaskSession = getSessionToken(
+    sk__startTask = await getSessionToken(
       {
         functionSelector: ethers.utils.id("startTask()"),
         targetContract: boundaryContract.address,
@@ -82,6 +83,7 @@ describe("Game Testing", async function () {
       userEOA,
       solaceAccount
     );
+    
   });
 
   it("Should test the boundary contract", async function () {

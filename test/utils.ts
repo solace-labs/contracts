@@ -267,9 +267,10 @@ export async function getUserOpSignature(
   solaceAccount: SolaceAccount
 ) {
   const encoded = await encodeFunctionCall(fc, solaceAccount);
+
   let dataAndParams = ethers.utils.arrayify(encoded);
   let paramsEncoded = [];
-  // Loop over params and concatenate each element with dataAndParams
+
   for (let i = 0; i < params.length; i++) {
     let argTypeStr = "bytes";
     const argType = fc.arguments[i].argType;
@@ -284,10 +285,12 @@ export async function getUserOpSignature(
     paramsEncoded.push(packedParam);
     dataAndParams = ethers.utils.concat([dataAndParams, packedParam]);
   }
+
   const hashDataAndParams = ethers.utils.keccak256(dataAndParams);
   const sessionSignature = await sessionEOA.signMessage(
     ethers.utils.arrayify(hashDataAndParams)
   );
+
   const packedData = ethers.utils.solidityPack(["bytes"], [encoded]);
   return ethers.utils.defaultAbiCoder.encode(
     ["bytes", "bytes", "bytes", "bytes[]"],
