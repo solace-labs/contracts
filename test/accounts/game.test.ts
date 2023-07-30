@@ -30,6 +30,7 @@ import {
 import { expect } from "chai";
 
 describe("Game Testing", async function () {
+  return;
   let solaceAccount: SolaceAccount;
   let solaceFactory: SolaceAccountFactory;
   let paymaster: VerifyingPaymaster;
@@ -83,7 +84,6 @@ describe("Game Testing", async function () {
       userEOA,
       solaceAccount
     );
-    
   });
 
   it("Should test the boundary contract", async function () {

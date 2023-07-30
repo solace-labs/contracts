@@ -3,7 +3,7 @@ pragma solidity ^0.8.12;
 
 contract Boundary {
     mapping(address => uint256) public points;
-    mapping(address => Task) tasks;
+    mapping(address => Task) public tasks;
 
     struct Task {
         uint256 state; // 0 - Not Started, 1 - In Progress, 2 - Completed

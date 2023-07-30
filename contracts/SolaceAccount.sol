@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.12;
 
-import "../stackup/account-abstraction/contracts/samples/SimpleAccount.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import "../stackup/account-abstraction/contracts/core/BaseAccount.sol";
 import "../stackup/account-abstraction/contracts/interfaces/IEntryPoint.sol";
+import "../stackup/account-abstraction/contracts/samples/callback/TokenCallbackHandler.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import "./sessions/SessionBase.sol";
 
 contract SolaceAccount is
-    SessionBase,
     BaseAccount,
     TokenCallbackHandler,
     UUPSUpgradeable,
@@ -15,6 +18,7 @@ contract SolaceAccount is
 {
     using ECDSA for bytes32;
     error InvalidSignatureLength();
+    uint8 public immutable version = 1;
     address public owner;
     IEntryPoint private immutable _entryPoint;
     event SolaceAccountInitialized(
@@ -25,6 +29,10 @@ contract SolaceAccount is
     modifier onlyOwner() {
         _onlyOwner();
         _;
+    }
+
+    function getVersion() public pure returns (uint8) {
+        return version;
     }
 
     function _onlyOwner() internal view {
@@ -48,73 +56,11 @@ contract SolaceAccount is
         _disableInitializers();
     }
 
-    function getFunctionData(
-        bytes calldata sig
-    ) external view returns (FunctionCall memory fc) {
-        (bytes memory ownerSig, , bytes memory data, ) = abi.decode(
-            sig,
-            (bytes, bytes, bytes, bytes[])
-        );
-        require(
-            owner == keccak256(data).toEthSignedMessageHash().recover(ownerSig)
-        );
-
-        fc = decodeSessionData(data);
-    }
-
     function _validateUserOp(
         UserOperation calldata userOp,
         bytes32 userOpHash
     ) internal returns (uint256 validationData) {
         validationData = _validateSignature(userOp, userOpHash);
-    }
-
-    function validateSessionUserOp(
-        UserOperation calldata userOp
-    ) internal view returns (uint256 validationData) {
-        (
-            bytes memory ownerSig,
-            bytes memory sessionSig,
-            bytes memory data,
-            bytes[] memory params
-        ) = abi.decode(userOp.signature, (bytes, bytes, bytes, bytes[]));
-        require(
-            owner == keccak256(data).toEthSignedMessageHash().recover(ownerSig)
-        );
-
-        FunctionCall memory fc = decodeSessionData(data);
-        bytes memory packedData = abi.encodePacked(data);
-        bytes memory dataAndParams = packedData;
-
-        for (uint i; i < params.length; i++) {
-            // bytes memory packedParam = abi.encodePacked(params[i]);
-            dataAndParams = abi.encodePacked(dataAndParams, params[i]);
-        }
-
-        require(
-            fc.sessionKey ==
-                keccak256(dataAndParams).toEthSignedMessageHash().recover(
-                    sessionSig
-                ),
-            "Invalid Session Signature"
-        );
-        bytes4 selector = bytes4(
-            keccak256(bytes("execute(address,uint256,bytes)"))
-        );
-        require(
-            keccak256(userOp.callData) ==
-                keccak256(
-                    abi.encodeWithSelector(
-                        selector,
-                        fc.targetContract,
-                        0,
-                        getCallData(fc, params)
-                    )
-                ),
-            "Invalid Calldata Requested"
-        );
-
-        validationData = validateSessionData(fc, params);
     }
 
     function validateUserOp(
@@ -125,8 +71,8 @@ contract SolaceAccount is
         _requireFromEntryPoint();
         if (userOp.signature.length == 65) {
             validationData = _validateUserOp(userOp, userOpHash);
-        } else if (userOp.signature.length > 97) {
-            validationData = validateSessionUserOp(userOp);
+            // } else if (userOp.signature.length > 97) {
+            //     validationData = validateSessionUserOp(userOp, owner);
         } else {
             revert InvalidSignatureLength();
         }

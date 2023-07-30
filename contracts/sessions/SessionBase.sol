@@ -2,19 +2,23 @@
 pragma solidity ^0.8.12;
 
 import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import "../../stackup/account-abstraction/contracts/interfaces/UserOperation.sol";
 
 abstract contract SessionBase {
+    using ECDSA for bytes32;
     mapping(address => bool) sessionAllowList;
-    //------
+
     uint8 constant UINT = 0;
     uint8 constant STRING = 1;
     uint8 constant ADDRESS = 2;
     uint8 constant BYTES = 3;
+
     struct Argument {
         uint8 argType;
         bytes paramLowerBound;
         bytes paramUpperBound;
     }
+
     struct FunctionCall {
         address targetContract;
         address sessionKey;
@@ -130,5 +134,68 @@ abstract contract SessionBase {
                 }
             }
         }
+    }
+
+    function validateSessionUserOp(
+        UserOperation calldata userOp,
+        address owner
+    ) internal pure returns (uint256 validationData) {
+        (
+            bytes memory ownerSig,
+            bytes memory sessionSig,
+            bytes memory data,
+            bytes[] memory params
+        ) = abi.decode(userOp.signature, (bytes, bytes, bytes, bytes[]));
+        require(
+            owner == keccak256(data).toEthSignedMessageHash().recover(ownerSig)
+        );
+
+        FunctionCall memory fc = decodeSessionData(data);
+        bytes memory packedData = abi.encodePacked(data);
+        bytes memory dataAndParams = packedData;
+
+        for (uint i; i < params.length; i++) {
+            // bytes memory packedParam = abi.encodePacked(params[i]);
+            dataAndParams = abi.encodePacked(dataAndParams, params[i]);
+        }
+
+        require(
+            fc.sessionKey ==
+                keccak256(dataAndParams).toEthSignedMessageHash().recover(
+                    sessionSig
+                ),
+            "Invalid Session Signature"
+        );
+        bytes4 selector = bytes4(
+            keccak256(bytes("execute(address,uint256,bytes)"))
+        );
+        require(
+            keccak256(userOp.callData) ==
+                keccak256(
+                    abi.encodeWithSelector(
+                        selector,
+                        fc.targetContract,
+                        0,
+                        getCallData(fc, params)
+                    )
+                ),
+            "Invalid Calldata Requested"
+        );
+        validationData = validateSessionData(fc, params);
+    }
+
+    function getFunctionData(
+        bytes calldata sig,
+        address owner
+    ) external pure returns (FunctionCall memory fc) {
+        (bytes memory ownerSig, , bytes memory data, ) = abi.decode(
+            sig,
+            (bytes, bytes, bytes, bytes[])
+        );
+        require(
+            owner == keccak256(data).toEthSignedMessageHash().recover(ownerSig)
+        );
+
+        fc = decodeSessionData(data);
     }
 }

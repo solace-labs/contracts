@@ -1,18 +1,20 @@
 import { ethers } from "hardhat";
+import { EntryPoint__factory } from "../test/utils";
+import { SolaceAccountFactory__factory } from "../typechain-types";
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
+  const [signer] = await ethers.getSigners();
+  // @ts-ignore
+  const entryPoint = await new EntryPoint__factory(signer).deploy();
 
-  const lockedAmount = ethers.utils.parseEther("1");
+  console.log("EntryPoint Address", entryPoint.address);
 
-  const Lock = await ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
-
-  await lock.deployed();
-
-  console.log(`Lock with 1 ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`);
+  // @ts-ignore
+  const solaceFactory = await new SolaceAccountFactory__factory(signer).deploy(
+    entryPoint.address
+  );
+  await solaceFactory.deployed();
+  console.log("SolaceFactory Address", solaceFactory.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

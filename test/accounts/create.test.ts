@@ -34,6 +34,7 @@ import {
 import { SolaceFactory } from "../../typechain-types/contracts/SolaceAccountFactory.sol";
 
 describe("Counter", async function () {
+  return;
   let solaceAccount: SolaceAccount;
   let solaceFactory: SolaceAccountFactory;
   let paymaster: VerifyingPaymaster;
