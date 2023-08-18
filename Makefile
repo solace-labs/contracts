@@ -29,6 +29,8 @@ solace_scw:
 	abigen --abi=./build/temp/SolaceAccountFactory.abi --pkg=SolaceAccountFactory --out=SolaceAccountFactory/SolaceAccountFactory.go
 	mkdir -p SolaceAccount 
 	abigen --abi=./build/temp/SolaceAccount.abi --pkg=SolaceAccount --out=SolaceAccount/SolaceAccount.go
+	mkdir -p EntryPoint 
+	abigen --abi=./build/temp/IEntryPoint.abi --pkg=EntryPoint --out=EntryPoint/EntryPoint.go
 
 	@echo " "
 	@echo "Moving things to right places"
@@ -37,6 +39,7 @@ solace_scw:
 
 	mv SolaceAccountFactory go/SolaceAccountFactory
 	mv SolaceAccount go/SolaceAccount
+	mv EntryPoint go/EntryPoint
 
 	# cat build/temp/SolaceAccount.abi | sed 's/^/export const SCW_ABI = /' | tee app/src/constants/scw-abi.ts > /dev/null
 	# cat build/temp/SolaceAccountFactory.abi | sed 's/^/export const SCW_FACTORY_ABI = /' | tee app/src/constants/scw-factory-abi.ts > /dev/null

@@ -69,13 +69,7 @@ contract SolaceAccount is
         uint256 missingAccountFunds
     ) external virtual override returns (uint256 validationData) {
         _requireFromEntryPoint();
-        if (userOp.signature.length == 65) {
-            validationData = _validateUserOp(userOp, userOpHash);
-            // } else if (userOp.signature.length > 97) {
-            //     validationData = validateSessionUserOp(userOp, owner);
-        } else {
-            revert InvalidSignatureLength();
-        }
+        validationData = _validateUserOp(userOp, userOpHash);
         _validateNonce(userOp.nonce);
         _payPrefund(missingAccountFunds);
     }

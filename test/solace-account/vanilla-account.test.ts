@@ -1,12 +1,11 @@
 import {
   Boundary,
   Boundary__factory,
-  Game,
-  Game__factory,
   SolaceAccount,
+  SolaceAccountFactory,
+  SolaceAccountFactory__factory,
   SolaceAccount__factory,
 } from "../../typechain-types";
-import { SolaceAccountFactory } from "../../typechain-types/contracts/SolaceAccountFactory.sol";
 import {
   EntryPoint,
   EntryPoint__factory,
@@ -16,32 +15,29 @@ import {
 } from "../utils";
 import { ethers } from "hardhat";
 import { Signer } from "ethers";
-import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { SolaceAccountFactory__factory } from "../../typechain-types/factories/contracts/SolaceAccountFactory.sol";
 import { expect } from "chai";
 
 describe("Vanilla Solace Account", function () {
   let entryPoint: EntryPoint;
   let solaceAccount: SolaceAccount;
   let solaceFactory: SolaceAccountFactory;
-  let admin: HardhatEthersSigner;
-  let owner: HardhatEthersSigner;
+  let admin: Signer;
+  let owner: Signer;
   let boundaryContract: Boundary;
 
   this.beforeAll(async function () {
-    [admin, owner] = await ethers.getSigners();
+    [admin as Signer, owner as Signer] = await ethers.getSigners();
     // @ts-ignore
     entryPoint = await new EntryPoint__factory(admin).deploy();
-    // @ts-ignore
     solaceFactory = await new SolaceAccountFactory__factory(admin).deploy(
       entryPoint.address
     );
-    await solaceFactory.createAccount(owner.address, 0);
+    await solaceFactory.createAccount(await owner.getAddress(), 0);
     const solaceAccountAddress = await solaceFactory.getAddress(
-      owner.address,
+      await owner.getAddress(),
       0
     );
-    solaceAccount = SolaceAccount__factory.connect(solaceAccountAddress);
+    solaceAccount = SolaceAccount__factory.connect(solaceAccountAddress, owner);
 
     // @ts-ignore
     boundaryContract = await new Boundary__factory(admin).deploy();
@@ -86,7 +82,7 @@ describe("Vanilla Solace Account", function () {
         entryPoint
       );
       const preBalance = await ethers.provider.getBalance(randomWallet.address);
-      await entryPoint.handleOps([userOp], owner.address);
+      await entryPoint.handleOps([userOp], await owner.getAddress());
       const postBalance = await ethers.provider.getBalance(
         randomWallet.address
       );
@@ -103,6 +99,7 @@ describe("Vanilla Solace Account", function () {
         0,
         functionCallData1,
       ]);
+
       const userOp1 = await fillAndSign(
         {
           sender: solaceAccount.address,
@@ -111,7 +108,7 @@ describe("Vanilla Solace Account", function () {
         walletOwner,
         entryPoint
       );
-      await entryPoint.handleOps([userOp1], admin.address);
+      await entryPoint.handleOps([userOp1], await admin.getAddress());
       expect(
         (await boundaryContract.tasks(solaceAccount.address)).state
       ).to.be.eq(1);
@@ -134,7 +131,7 @@ describe("Vanilla Solace Account", function () {
         walletOwner,
         entryPoint
       );
-      await entryPoint.handleOps([userOp2], admin.address);
+      await entryPoint.handleOps([userOp2], await admin.getAddress());
       expect(
         (await boundaryContract.tasks(solaceAccount.address)).points
       ).to.be.eq(100);

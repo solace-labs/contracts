@@ -15,6 +15,7 @@ async function main() {
   );
   await solaceFactory.deployed();
   console.log("SolaceFactory Address", solaceFactory.address);
+
 }
 
 // We recommend this pattern to be able to use async/await everywhere
