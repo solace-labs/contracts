@@ -30,10 +30,6 @@ contract SolaceAccount is
         _;
     }
 
-    function getVersion() public pure returns (uint8) {
-        return version;
-    }
-
     function _onlyOwner() internal view {
         //directly from EOA owner, or through the account itself (which gets redirected through execute())
         require(
