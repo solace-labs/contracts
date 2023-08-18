@@ -8,7 +8,6 @@ import "../stackup/account-abstraction/contracts/core/BaseAccount.sol";
 import "../stackup/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import "../stackup/account-abstraction/contracts/samples/callback/TokenCallbackHandler.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import "./sessions/SessionBase.sol";
 
 contract SolaceAccount is
     BaseAccount,
