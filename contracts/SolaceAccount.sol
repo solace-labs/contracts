@@ -110,12 +110,16 @@ contract SolaceAccount is
             "wrong array lengths"
         );
         if (value.length == 0) {
-            for (uint256 i = 0; i < dest.length; i++) {
-                _call(dest[i], 0, func[i]);
+            unchecked {
+                for (uint256 i = 0; i < dest.length; i++) {
+                    _call(dest[i], 0, func[i]);
+                }
             }
         } else {
-            for (uint256 i = 0; i < dest.length; i++) {
-                _call(dest[i], value[i], func[i]);
+            unchecked {
+                for (uint256 i = 0; i < dest.length; i++) {
+                    _call(dest[i], value[i], func[i]);
+                }
             }
         }
     }
