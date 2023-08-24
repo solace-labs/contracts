@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.12;
+pragma solidity 0.8.19;
 
 contract Boundary {
     mapping(address => uint256) public points;

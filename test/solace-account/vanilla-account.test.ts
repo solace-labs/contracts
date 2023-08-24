@@ -12,6 +12,7 @@ import {
   ONE_ETH,
   fillAndSign,
   fund,
+  simulationResultCatch,
 } from "../utils";
 import { ethers } from "hardhat";
 import { Signer } from "ethers";
@@ -41,6 +42,45 @@ describe("Vanilla Solace Account", function () {
 
     // @ts-ignore
     boundaryContract = await new Boundary__factory(admin).deploy();
+  });
+
+  it("should create a 0x wallet", async function () {
+    // await solaceFactory.createAccount(ethers.constants.AddressZero, 0);
+    // const solaceAccountAddress = await solaceFactory.getAddress(
+    //   ethers.constants.AddressZero,
+    //   0
+    // );
+    // const solaceAccount = SolaceAccount__factory.connect(
+    //   solaceAccountAddress,
+    //   owner
+    // );
+    // await fund(solaceAccount.address);
+    // const randomWallet = ethers.Wallet.createRandom();
+    // const functionCallData1 =
+    //   boundaryContract.interface.encodeFunctionData("startTask");
+    // const callData1 = solaceAccount.interface.encodeFunctionData("execute", [
+    //   boundaryContract.address,
+    //   0,
+    //   functionCallData1,
+    // ]);
+    // const userOp1 = await fillAndSign(
+    //   {
+    //     sender: solaceAccount.address,
+    //     callData: callData1,
+    //   },
+    //   owner,
+    //   entryPoint
+    // );
+    // console.log(
+    //   (
+    //     await entryPoint.callStatic
+    //       .simulateValidation(userOp1)
+    //       .catch(simulationResultCatch)
+    //   ).returnInfo
+    // );
+    // // await solaceAccount
+    // //   .connect(owner)
+    // //   .execute(randomWallet.address, ONE_ETH, "0x");
   });
 
   it("owner should be able to call transfer", async function () {
